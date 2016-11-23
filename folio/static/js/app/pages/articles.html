@@ -1,0 +1,15 @@
+<div id="currentView">
+
+    <div class="page-header navbar-static-top main-title">
+        <h1>articles</h1>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-lg-4" ng-repeat="item in items">
+        <h3>{{ item.title }}</h3>
+        <p ng-repeat="par in item.text" style="text-indent:2em; color:lightgray; text-align: justify;">{{ par }}</p>
+
+        <br/>
+        <br/>
+    </div>
+
+</div>

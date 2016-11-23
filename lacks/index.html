@@ -1,0 +1,99 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>MSG</title>
+	<link rel="icon" type="image/png" href="resources/img/favicon.png" />
+	<link rel="stylesheet" type="text/css" href="style/css/full.css">
+</head>
+<body>
+	<noscript>Sorry, this page requires Canvas/WebGL, so you'll need to enable JavaScript.</noscript>
+
+	<!-- Load libraries -->
+	<script type="text/javascript" src="javascript/lib/three.tools.detector.js"></script>
+	<script type="text/javascript" src="javascript/lib/three.js"></script>
+	<script type="text/javascript" src="javascript/lib/three.tools.stats.js"></script>
+	<script type="text/javascript" src="javascript/lib/three.tools.rendererstats.js"></script>
+	<script type="text/javascript" src="javascript/lib/three.tools.dat..js"></script>
+    <script type="text/javascript" src="javascript/lib/jquery.min.js"></script>
+	<!-- <script src="lib/orbit-app.controls.core.js"></script> -->
+
+    <!-- Load fonts -->
+    <script src="style/fonts/droid_serif_regular.typeface.js"></script>
+
+    <!-- HTML -->
+	<div id="container">		<!-- stats & messages -->
+		<div id="viewport" style="">
+			<div id="content" style="display: block; pointer-events: none;">
+			</div>
+			<div id="content1" style="display: none">
+				<p class="mainTitle">VICTORY</p>
+				<p>Such a tremendous demonstration of talent.</p>
+				<p class="mainSubtitle">At the north end of the island, near the tumbled remains of the slip 
+				where the handle of the rusty winch still creaks in an easterly wind, 
+				I had two Poles on the far face of the last dune.</p>
+			</div>
+			<div id="content2" style="display: none">
+				<p class="mainTitle">FAILURE</p>
+				<p>Thou hast a most peculiar set of skills.</p>
+				<p class="mainSubtitle"> What then agentlike brought about that tragoady thundersday
+                    this municipal sin business? Our cubehouse still rocks as earwitness
+                    to the thunder of his arafatas but we hear also through successive
+                    ages that shebby choruysh of unkalified muzzlenimiissilehims that
+                    would blackguardise the whitestone ever hurtleturtled out of
+                    heaven.</p>
+			</div>
+			<div id="contentFirefox" style="display: none">
+				<p class="mainTitle">BETTER EXPERIENCED WITH CHROME</p>
+			</div>
+            <div id="contentNoAudio" style="display: none">
+                <p class="mainTitle">Your browser is most likely not compatible with Web Audio ):</p>
+            </div>
+		</div>
+	</div>
+	<div id="info">					<!-- ctrls -->
+		<div class="bottom" id="inlineDoc" >
+			<span style="font-size:12px;color:#fff">
+			<strong>Move camera : </strong>Z, Q, S, D
+			<br>
+			<strong>Select : </strong>left click
+			<br>
+			<strong>Order : </strong>right click
+			<br>
+			The only one who knows this ounce of words is just a token<br>
+			is he who has a ton to tell that must remain unspoken.</span>
+		</div>
+	</div>
+
+	<!-- Load game -->
+    <script type="text/javascript" src="javascript/src/app.core.js"></script>
+    <script type="text/javascript" src="javascript/src/app.core.globals.js"></script>
+    <script type="text/javascript" src="javascript/src/app.core.run.js"></script>
+    <script type="text/javascript" src="javascript/src/app.three.render.js"></script>
+
+    <script type="text/javascript" src="javascript/src/app.meshes.core.js"></script>
+    <script type="text/javascript" src="javascript/src/app.meshes.pattern.js"></script>
+    <script type="text/javascript" src="javascript/src/app.meshes.builder.js"></script>
+
+    <script type="text/javascript" src="javascript/src/app.ia.js"></script>
+
+	<script type="text/javascript" src="javascript/src/app.tools.js"></script>
+	<script type="text/javascript" src="javascript/src/app.three.hud.js"></script>
+    <script type="text/javascript" src="javascript/src/app.audio.core.js"></script>
+
+    <script type="text/javascript" src="javascript/src/app.controls.core.js"></script>
+    <script type="text/javascript" src="javascript/src/app.controls.mousedown.js"></script>
+    <script type="text/javascript" src="javascript/src/app.controls.mouseup.js"></script>
+    <script type="text/javascript" src="javascript/src/app.controls.mousespecial.js"></script>
+    <script type="text/javascript" src="javascript/src/app.controls.keydown.js"></script>
+    <script type="text/javascript" src="javascript/src/app.controls.keyup.js"></script>
+
+    <script type="text/javascript" src="javascript/src/app.typo.core.js"></script>
+
+    <!-- Start game -->
+    <script>
+        $(document).ready(function() {
+            var app = new APP.Core();
+        });
+    </script>
+</body>
+</html>

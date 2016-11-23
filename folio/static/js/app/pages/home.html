@@ -1,0 +1,27 @@
+<div id="currentView">
+
+    <div id="banner" class="page-header navbar-fixed-top main-title">
+        <div id="canvas-particles"></div>
+        <h1 style="text-shadow: 1px 1px #5d4620;">Madblade</h1>
+    </div>
+
+    <div class="page-header navbar-static-top main-title"
+         style="color: rgb(51, 53, 84); border-color: rgb(51, 53, 84);"><h1>.</h1></div>
+
+    <div class="row">
+        <div class="col-xs-12" ng-controller="home_controller">
+            <div ng-repeat="item in items">
+                <list-item item="item"></list-item>
+            </div>
+        </div>
+    </div>
+
+    <footer id="footer" class="navbar-fixed-bottom">
+        <div class="container site-footer">
+            <div class="modal-footer site-footer">
+                github.com/madblade - M.S.
+            </div>
+        </div>
+    </footer>
+
+</div>

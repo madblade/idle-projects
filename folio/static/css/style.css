@@ -1,0 +1,153 @@
+/* Regular */
+html, body {
+    background-color: rgb(51, 53, 84);
+    margin: 0;
+    height: auto;
+    overflow: hidden;
+    font: 20px/1.5 "Source Sans Pro", "Helvetica Neue", Arial, sans-serif;
+    color: goldenrod;
+}
+
+body {
+    text-align: center;
+}
+
+h1 {
+    font-weight: 100;
+}
+
+a {
+    font-weight: 200;
+    color: goldenrod;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: none;
+    color:goldenrod;
+}
+
+a:visited {
+    text-decoration: none;
+}
+
+a:visited:not(:hover) {
+    text-decoration: none;
+}
+
+a:active {
+    text-decoration: none;
+}
+
+p {
+    font-weight: 200;
+    color: goldenrod;
+}
+
+.no-select {
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+
+::-webkit-scrollbar{
+    display: none;
+}
+
+#canvas-particles {
+    position:absolute;
+    margin-top:0;
+    margin-bottom:0;
+}
+
+.container {
+    width:100%;
+    padding: 0 0 0 0;
+}
+
+.site-footer {
+    padding-top:0;
+    padding-bottom:5px;
+    border-color:gray;
+    color:gray;
+    background-color: rgb(51, 53, 84);
+}
+
+.main-title {
+    background-color: rgb(51, 53, 84);
+    margin-top: 0;
+    margin-bottom: 0;
+    border-color: darkgoldenrod;
+}
+
+.home-list-item {
+    background-color: rgb(57, 59, 97);
+    padding:5px 5px 5px 5px;
+    margin: 0 0 0 0;
+    border: 1px transparent solid;
+    background-clip:content-box;
+    color:darkkhaki;
+}
+
+.home-list-item:hover{
+    background-color: #714f27;
+    transition: background 0.5s;
+    cursor:default;
+}
+
+.home-list-item-item {
+    padding: 10px 10px 10px 10px;
+}
+
+.hyphenate {
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+}
+
+.donthyphenate {
+    hyphens: none;
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+}
+
+.row {
+    padding:5px 5px 5px 5px;
+}
+
+
+/*
+light blue: 84A5dd
+light green blue: 64d6e2
+fdaed4 pink, use with golden and brown
+
+violet 785ebb
+A09DE5
+A0CADB
+79BBB5
+F6D860
+9988CD
+EDB948
+FDACB4
+DBBE39
+DFBC94
+3CCAD1
+F68F6F
+9787EA
+CCC5E3
+FD9372
+9B7AD5
+DE89AC
+98BFF6
+FEC54F
+9784ED
+F4C3C5
+63C5AB
+F4696B
+E794AE
+9B7FE6
+EF9F64
+87C4A3
+*/

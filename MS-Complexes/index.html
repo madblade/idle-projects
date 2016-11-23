@@ -1,0 +1,210 @@
+<!-- 'Stealing from one author is plagiarism; from many authors, research.
+                Walter Moers
+
+Credits:
+    davidscottlyons.com
+    mrdoob.com
+
+
+Better experienced on 64-bit chrome canary (and with a local web server;
+if you don't have one, just use firefox dev' edition).
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=1280, user-scalable=no">
+
+    <title>Morse-Smale Complexes</title>
+
+    <!-- Required stylesheet -->
+    <link rel="stylesheet" href="deck.js/core/deck.core.css">
+
+    <!-- Extension CSS files go here. Remove or add as needed. -->
+    <link rel="stylesheet" media="screen" href="deck.js/extensions/menu/deck.menu.css">
+    <link rel="stylesheet" media="screen" href="deck.js/extensions/goto/deck.goto.css">
+    <link rel="stylesheet" media="screen" href="deck.js/extensions/status/deck.status.css">
+    <link rel="stylesheet" media="screen" href="deck.js/extensions/navigation/deck.navigation.css">
+
+    <!-- Style theme. More available in /themes/style/ or create your own. -->
+    <link rel="stylesheet" media="screen" href="resources/theme.css">
+
+    <!-- Transition theme. More available in /themes/transition/ or create your own. -->
+    <link rel="stylesheet" media="screen" href="deck.js/themes/transition/fade.css">
+
+    <!-- Required Modernizr file -->
+    <script src="deck.js/modernizr.custom.js"></script>
+</head>
+
+<body class="language-javascript">
+<div class="deck-container">
+
+    <section class="slide"></section>
+
+    <!-- INTRO -->
+    <section class="slide core">
+        <div class="page-cover">
+            <h2 class="cover-title">
+                Computing<br/> Morse-Smale Complexes<br/>for large datasets
+            </h2>
+        </div>
+    </section>
+
+    <section class="slide core">
+        <h2 class="plan-title">General context</h2>
+        <p class="slide plan-list"><i>"A practical approach to Morse-Smale Complex computation: scalability and generality"
+        </i> - A. Gyulassy, P.-T. Bremer, B. Hamann, V. Pascucci, 2008</p>
+        <p class="slide plan-list">Scalable description of scalar fields</p>
+        <p class="slide plan-list">Applications: visualization (isosurfaces, volume rendering, ...)</p>
+        <p class="slide plan-list">Disciplines: medical imaging, meteorology, chemistry, physics, ...</p>
+    </section>
+
+    <section class="slide core">
+        <p>Chmutov surface</p>
+        <iframe style="margin-top:7%;" src="iframes/isosurface.html" frameborder="0"></iframe>
+    </section>
+
+    <section class="slide core">
+        <h2 class="plan-title">Several approaches</h2>
+        <p class="slide plan-list">Geometry-oriented simplification</p>
+        <p class="slide plan-list">Topology-oriented simplification</p>
+        <div class="slide" id="reebMain">
+            <p style="color:#888888; margin-bottom:0; font-size:20pt;">
+                <img src="images/3-Reeb-plat.png" style="width:120%; opacity: 0.7;">
+                Reeb graphs
+            </p>
+        </div>
+        <div class="slide" id="smaleMain">
+            <p style="color:#888888; margin-bottom:0; font-size:20pt;">
+                <img src="images/4-MS-plat.png" style="width:100%; opacity: 0.7;">
+                Morse-Smale complexes
+            </p>
+        </div>
+    </section>
+
+    <section class="slide core">
+        <h2 class="plan-title">Morse-Smale Complex</h2>
+    </section>
+
+    <section class="slide core">
+        <iframe src="iframes/2DFunction.html" frameborder="0"></iframe>
+    </section>
+
+    <section class="slide core">
+        <h2 class="plan-title">Proposed technique</h2>
+
+        <div style="height: 80%; width:100%;">
+            <img src="images/Takk.png" style="width:100%; opacity: 0.7;"/>
+        </div>
+    </section>
+
+    <section class="slide core">
+        <div style="height: 100%; width:100%;">
+            <img src="images/cancellation.png" style="margin-top:3.5%; width:100%; opacity: 0.7;"/>
+        </div>
+    </section>
+
+    <!--<section class="slide core">
+        <iframe  src="iframes/Article.html" frameborder="0"></iframe>
+    </section>-->
+
+    <section class="slide core">
+        <h2 class="plan-title">Practical aspects</h2>
+        <div style="height: 100%; width:100%;">
+            <img src="images/experiment.png" style="margin-top:1%; height:70%; opacity: 0.7;"/>
+        </div>
+    </section>
+
+    <section class="slide core">
+        <h2 class="plan-title">Practical aspects</h2>
+        <div style="height: 100%; width:100%;">
+            <img src="images/experiment-2.png" style="margin-top:1%; height:70%; opacity: 0.7;"/>
+        </div>
+    </section>
+
+    <section class="slide core">
+        <h2 class="plan-title">Practical aspects</h2>
+        <p class="slide plan-list">Results using a regular computer (2GB RAM, Athlon 2.2GHz):</p>
+        <p class="slide plan-list">> 2 million cells: 47s (vs 27s)</p>
+        <p class="slide plan-list">> 17 million cells: 5m (vs 4m)</p>
+        <p class="slide plan-list">> 1 billion cells: 23h (unattained)</p>
+        <p class="slide plan-list">The most time is spent on cancellations</p>
+    </section>
+
+    <section class="slide core">
+        <h2 class="plan-title">Perspectives</h2>
+        <p class="slide plan-list">Parallelization</p>
+        <p class="slide plan-list">Adapt to dynamic problems (where the function evolves)</p>
+        <iframe src="iframes/2DFunctionTime.html" frameborder="0"
+                class="slide" style="width:100%; height:50%;"></iframe>
+    </section>
+
+    <section class="slide core">
+        <h2 class="plan-title">Discussion</h2>
+        <p class="slide plan-list" style="margin-bottom: 10px;">Persistance cancellation</p>
+        <p class="slide plan-sublist" style="margin-bottom: 10px;">Distance? Operate it on each parcel first?</p>
+        <p class="slide plan-sublist">Error and order of cancellations</p>
+        <p class="slide plan-list">Geometrical simplifications for CW-complexes</p>
+        <p class="slide plan-list"><i>d</i>-cells in higher dimension</p>
+        <img class="slide" src="images/2-3Dcancellation-blue.png"
+             style="position:absolute; top: 65%; left: 45%; width:45%; opacity: 0.7;">
+    </section>
+
+    <!-- ENDING -->
+    <section class="slide">
+        <iframe src="iframes/cube-title.html" frameborder="0"></iframe>
+        <div class="page-cover">
+            <h1 class="cover-title" >
+                Thanks
+                <small><p></p></small>
+            </h1>
+        </div>
+    </section>
+
+    <!-- End slides. -->
+
+    <!-- deck.goto snippet -->
+    <form action="." method="get" class="goto-form">
+        <label for="goto-slide">Go to slide:</label>
+        <input type="text" name="slidenum" id="goto-slide" list="goto-datalist">
+        <datalist id="goto-datalist"></datalist>
+        <input type="submit" value="Go">
+    </form>
+
+    <!-- End extension snippets. -->
+</div>
+
+<div id="info-left">
+    <a>M. S. | </a>
+</div>
+
+<div id="info-right">
+    <!--<a>05/11/2015</a>-->
+    <a>
+        <span class="deck-status-current"></span>
+        /
+        <span class="deck-status-total"></span>
+    </a>
+</div>
+
+<!-- Required JS files. -->
+<script src="resources/jquery-2.1.1.min.js"></script>
+<script src="deck.js/core/deck.core.js"></script>
+
+<!-- Extension JS files. Add or remove as needed. -->
+<script src="deck.js/extensions/menu/deck.menu.js"></script>
+<script src="deck.js/extensions/goto/deck.goto.js"></script>
+<script src="deck.js/extensions/status/deck.status.js"></script>
+<script src="deck.js/extensions/navigation/deck.navigation.js"></script>
+
+<!-- Initialize the deck. You can put this in an external file if desired. -->
+<script src="resources/slides.js"></script>
+
+<script>
+    //gamepadSupport.init();
+</script>
+
+</body>
+</html>

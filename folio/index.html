@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <title>Madblade</title>
+
+        <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="static/css/font.css">
+        <link rel="stylesheet" type="text/css" href="static/css/style.css">
+        <link rel="stylesheet" type="text/css" href="static/css/normalize.css">
+        <link rel="icon" type="image/png" href="favico.ico">
+
+        <!-- Libraries -->
+        <script src="static/js/lib/jquery-2.1.4.min.js"></script>
+        <script src="static/js/lib/angular.min.js"></script>
+        <script src="static/js/lib/angular-route.js"></script>
+        <script src="static/js/lib/angular-animate.js"></script>
+        <script src="static/js/lib/hyphenator-loader.js"></script>
+
+        <!-- Module -->
+        <script src="static/js/app/angular.app.js"></script>
+
+        <!-- Controllers -->
+        <script src="static/js/app/controllers/angular.controllers.home.js"></script>
+        <script src="static/js/app/controllers/angular.controllers.articles.js"></script>
+        <script src="static/js/app/controllers/angular.controllers.dev.js"></script>
+        <script src="static/js/app/controllers/angular.controllers.cerveau.js"></script>
+        <script src="static/js/app/controllers/angular.controllers.cine.js"></script>
+        <script src="static/js/app/controllers/angular.controllers.jv.js"></script>
+        <script src="static/js/app/controllers/angular.controllers.lire.js"></script>
+        <script src="static/js/app/controllers/angular.controllers.pelle.js"></script>
+        <script src="static/js/app/controllers/angular.controllers.scribe.js"></script>
+
+        <!-- Directives -->
+        <script src="static/js/app/directives/angular.directives.listItem.js"></script>
+
+        <!-- Animations -->
+        <!--<script src="static/js/app/animations/angular.animations.view.js"></script>-->
+
+        <!-- Misc style and visual controllers -->
+        <script src="static/js/app/custom/resizer.js"></script>
+        <script src="static/js/app/custom/main.js"></script>
+        <script src="static/js/app/custom/particles.js"></script>
+
+        <!-- Icons designed by Freepik @ flaticon.com -->
+    </head>
+	
+    <body ng-app="application">
+        <div class="container no-select">
+            <ng-view autoscroll class="slide">
+            </ng-view>
+        </div>
+	</body>
+</html>

@@ -1,0 +1,259 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font: 20px/1.5 "Source Sans Pro", "Helvetica Neue", Arial, sans-serif;
+    padding-top: 10px;
+    /*background: #ddd;*/
+    /*background: rgb(5, 56, 70);*/
+    background: rgb(13, 56, 84);
+
+}
+
+a {
+    /*color: #428bca;*/
+    color: darkgoldenrod;
+    text-decoration: none;
+}
+
+.deck-container {
+    background: rgb(13, 56, 84);
+    color: #333;
+    text-align: center;
+    min-height: 0;
+    overflow-y: hidden;
+    font-size: 35px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    border-width:1px;
+    border-style:solid;
+    border-color:darkgoldenrod;
+
+    margin: 0 auto;
+    margin-left: -640px;
+    margin-top: -360px;
+}
+
+.deck-menu {
+    overflow: auto;
+}
+
+.deck-menu > .deck-current,
+.deck-menu > .deck-child-current {
+    outline: 10px solid teal;
+}
+
+.deck-container,
+.deck-container > .slide {
+    width: 1280px;
+    height: 720px;
+}
+
+.slide {
+    width: 100%;
+}
+
+.page-cover {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: table;
+}
+
+.cover-title {
+    display: table-cell;
+    vertical-align: middle;
+    font-size: 70px;
+    line-height: 1.5;
+}
+
+.cover-title small {
+    font-size: 60%;
+    display: block;
+}
+
+h2 {
+    margin: 0;
+    padding-top: 20px;
+    font-size: 56px;
+}
+
+img.spotlight,
+video.spotlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+iframe {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.deck-container > .slide .deck-before.temp,
+.deck-container > .slide .deck-previous.temp,
+.deck-container > .slide.deck-before .temp:not(.slide),
+.deck-container > .slide.deck-previous .temp:not(.slide) {
+    opacity: 0;
+    position: absolute;
+}
+
+.deck-container > .slide .deck-current.temp,
+.deck-container > .slide.deck-current .temp:not(.slide) {
+    position: relative;
+}
+
+.slide.abs-bc,
+.abs-bc {
+    width: 100%;
+    position: absolute !important;
+    bottom: 30px;
+    top: auto;
+    left: 0;
+    right: 0;
+    text-align: center;
+    z-index: 2;
+}
+
+.deck-container .bc-text {
+    bottom: 50px;
+    padding: 35px 0;
+}
+
+.outline {
+    text-shadow: 3px 0px 1px #ffffff, -3px 0px 1px #ffffff, 0px -3px 1px #ffffff, 0px 3px 1px #ffffff, 2px 2px 1px #ffffff, -2px 2px 1px #ffffff, 2px -2px 1px #ffffff, -2px -2px 1px #ffffff, 3px 2px 1px #ffffff, -3px 2px 1px #ffffff, 3px -2px 1px #ffffff, -3px -2px 1px #ffffff, 1px 3px 1px #ffffff, -1px 3px 1px #ffffff, 1px -3px 1px #ffffff, -1px -3px 1px #ffffff, -1px -1px 1px #ffffff, -1px 1px 1px #ffffff, 1px -1px 1px #ffffff, 1px 1px 1px #ffffff;
+}
+
+.overlay-full {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0 !important;
+}
+
+.deck-prev-link,
+.deck-next-link {
+    line-height: 28px;
+    font-size: 28px;
+}
+
+.deck-prev-link:hover,
+.deck-next-link:hover {
+    text-decoration: none;
+    background: #777;
+}
+
+.deck-status {
+    font-size: 18px;
+    right: 10px;
+    text-shadow: 0 0 1px #fff;
+    position: absolute;
+}
+
+.goto-form {
+    height: auto;
+    font-size: 20px;
+}
+
+.goto-form label,
+.goto-form input {
+    font-size: inherit;
+}
+
+#goto-slide {
+    height: auto;
+}
+
+.on-slide-scene-required .scene-required,
+.on-slide-scene-object .scene-object,
+.on-slide-render-loop .render-loop {
+    font-weight: 700;
+}
+
+#camera-demo {
+    transition: height 400ms, top 400ms;
+}
+
+.on-slide-camera-iframe-resize #camera-demo {
+    top: 150px;
+    height: 50%;
+}
+
+.on-slide-interaction1 .interaction1,
+.on-slide-interaction2 .interaction2,
+.on-slide-interaction3 .interaction3,
+.on-slide-interaction4 .interaction4 {
+    font-weight: 700;
+}
+
+#info-left {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: 370px;
+    margin-left: -640px;
+}
+
+#info-right {
+    position: absolute;
+    top: 50%;
+    right: 50%;
+    margin-top: 370px;
+    margin-right: -640px;
+    text-align: right;
+}
+
+.plan-list {
+    color: #888888;
+    position: absolute;
+    text-align: left;
+    margin-left: 50px;
+}
+
+.plan-sublist {
+    color: #888888;
+    position: absolute;
+    text-align: left;
+    margin-left: 100px;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+.plan-title {
+    margin-bottom: 50px;
+}
+
+#reebMain {
+    width: 32%;
+    position: absolute;
+    top: 46%;
+    left: 7%;
+}
+
+#smaleMain {
+    width: 32%;
+    position: absolute;
+    top: 36%;
+    left: 57%;
+}
+
+.core > .plan-title {
+    /*background-color: #444444;*/
+    border-bottom: 1px solid darkgoldenrod;
+    color: darkgoldenrod;
+    padding-bottom: 10px;
+}
+
+.core {
+    background-color: rgb(13, 56, 84);
+    color: darkgoldenrod;
+}

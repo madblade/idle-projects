@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>2D Function</title>
+    <script src="build/mathbox-bundle.js"></script>
+    <link rel="stylesheet" href="build/mathbox.css">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+<script>
+    var nbSlides = 20;
+
+    // Init libs
+    var mathbox = mathBox({
+        plugins: ['core', 'controls', 'cursor', 'mathbox'],
+        controls: {
+            klass: THREE.OrbitControls // Orbit controls, i.e. Euler angles, with gimbal lock
+            //klass: THREE.TrackballControls // Trackball controls, i.e. Free quaternion rotation
+        }
+    });
+    if (mathbox.fallback) throw "WebGL not supported";
+    var three = mathbox.three;
+    three.renderer.setClearColor(new THREE.Color(13.0/256.0, 56.0/256.0, 84.0/256.0), 1.0); // 187/255, 110/255, 185/255
+
+    // Place camera
+    var camera = mathbox.camera({proxy: true, position: [0, 0, 10]});
+
+    // 2D cartesian
+    var view = mathbox.cartesian({range: [[-2, 2], [-2, 2], [-2, 2]], scale: [4, 4, 2]});
+
+    // Calibrate focus distance for units
+    mathbox.set('focus', 3);
+
+    /** ############## MATHS */
+
+    function mainFunction(x,y) {
+        return (π/2 + .6 * Math.sin(x - y + 2 * Math.sin(y)) + .3 * Math.sin(x * 2 + y * 2 * 1.81)
+                + .1825 * Math.sin(x * 3 - y * 2 * 2.18)) - .5;
+    }
+
+    // My function:
+    // 1.570796 + .6 * sin(x - y + 2 * sin(y)) + .3 * sin(x * 2 + y * 2 * 1.81) + .1825 * sin(x * 3 - y * 2 * 2.18)) -.5
+    var emitSurfaceBlop = function (emit, x, y, i, j) {
+        return emit(x, y,
+            (π / 2
+            + .6 * Math.sin(x - y + 2 * Math.sin(y))
+            + .3 * Math.sin(x * 2 + y * 2 * 1.81)
+            + .1825 * Math.sin(x * 3 - y * 2 * 2.18)) - .5
+        );
+    };
+
+    var emitSurfaceAckley = function (emit, x, y, i, j) {
+        return emit(x,y,0.2*(-20*Math.exp(-0.2*Math.sqrt(0.5*(x*x+y*y)))-Math.exp(0.5*(Math.cos(2*Math.PI*x)+Math.cos(2*Math.PI*y)))+20))
+    };
+
+    var emitSurfaceEggholder = function (emit, x, y, i, j) {
+        return emit(x,y,0.005*(-(50*y+47)*Math.sin(Math.sqrt(Math.abs(50*y+50*x*0.5+47)))-50*x*Math.sin(Math.sqrt(Math.abs(50*x-50*y-47)))+10))
+    };
+
+    var emitSurfaceHolder = function (emit, x, y, i, j) {
+        return emit(x,y,2*(-Math.abs(Math.sin(x)*Math.cos(y)*Math.exp(Math.abs(1-Math.sqrt(x*x+y*y)/Math.PI))))+5)
+    };
+
+    var emitSimpleSaddle = function(emit, x, y, i, j) {
+        return emit(x,y,0.7*(x*x-y*y));
+    };
+
+    var emitStarfishSaddle = function(emit, x, y, i, j) {
+        return emit(x,y,0.05*(Math.pow(x,5)-10*Math.pow(x,3)*y*y+5*x*Math.pow(y,4)));
+    };
+
+    var emitMonkeySaddle = function(emit, x, y, i, j) {
+        return emit(x,y,0.3*(Math.pow(x,3)-3*x*y*y));
+    };
+
+    var surfaceAreaProgressTop = function (emit, x, y, i, j, t) {
+        var zee = (π / 2
+                + .6 *    Math.sin(x - y + 2 * Math.sin(y))
+                + .3 *    Math.sin(x * 2 + y * 2 * 1.81)
+                + .1825 * Math.sin(x * 3 - y * 2 * 2.18)) -.5;
+
+        if (t%4 < 2) {
+            if (t % 2 < zee) {
+                return emit(x, y, zee);
+            }
+        }
+        else {
+            if (zee > 2-t%2)
+                return emit(x,y,zee);
+        }
+    };
+
+    var surfaceAreaProgressBot = function (emit, x, y, i, j, t) {
+        var zee = (π / 2
+                + .6 * Math.sin(x - y + 2 * Math.sin(y))
+                + .3 * Math.sin(x * 2 + y * 2 * 1.81)
+                + .1825 * Math.sin(x * 3 - y * 2 * 2.18)) - .5;
+
+        if (t%4 < 2) {
+            if (t%2 > zee)
+                return emit(x, y, zee);
+        }
+        else {
+            if (zee < 2-t%2)
+                return emit(x,y,zee);
+        }
+    };
+
+    var surfaceAreaProgressIsocontour = function (emit, x, y, i, j, t) {
+        var zee = (π / 2
+                + .6 * Math.sin(x - y + 2 * Math.sin(y))
+                + .3 * Math.sin(x * 2 + y * 2 * 1.81)
+                + .1825 * Math.sin(x * 3 - y * 2 * 2.18)) - .5;
+
+        if (t%4 < 2) {
+            if (Math.abs(t%2 - zee) < .02)
+                return emit(x, y, zee);
+        }
+        else {
+            if (Math.abs(zee - (2-t%2)) < .02)
+                return emit(x,y,zee);
+        }
+    };
+
+    /** ############## SHADERS */
+
+    var gradientOnGrid = "" +
+        "uniform float intensity;\n" +
+        "uniform float scale;\n\n" +
+        "vec4 warpVertex(vec4 xyzw) {\n" +
+        "  xyzw *= vec4(1.0, 0.5, 0.5, 0.0);\n\n" +
+        "  xyzw *= vec4(1.0, 2.0, 2.0, 0.0);\n" +
+        "    \n" +
+        "  return xyzw;\n" +
+        "}\n\n" +
+        "vec4 getSample(vec4 xyzw);\n" +
+        "vec4 getVectorSample(vec4 xyzw) {\n" +
+        "  vec4 xyz0 = vec4(xyzw.xyz, 0.0);\n" +
+        "  vec3 c = warpVertex(getSample(xyz0)).xyz;\n" +
+        "  vec3 r = warpVertex(getSample(xyz0 + vec4(1.0, 0.0, 0.0, 0.0))).xyz;\n" +
+        "  vec3 u = warpVertex(getSample(xyz0 + vec4(0.0, 1.0, 0.0, 0.0))).xyz;\n" +
+        "  vec3 n = -10.0 * vec3(r.z-c.z, u.z-c.z, c.z);" +
+        "  n.z = xyzw.z;\n" +
+        "  return vec4(c + 0.15 * n * xyzw.w, 0.0);\n" +
+        "}" +
+        "";
+
+    var gradientOnDomain = "" +
+        "uniform float intensity;\n" +
+        "uniform float scale;\n\n" +
+        "vec4 warpVertex(vec4 xyzw) {\n" +
+        "  xyzw *= vec4(1.0, 0.5, 0.5, 0.0);\n\n" +
+        "  xyzw *= vec4(1.0, 2.0, 2.0, 0.0);\n" +
+        "    \n" +
+        "  return xyzw;\n" +
+        "}\n\n" +
+        "vec4 getSample(vec4 xyzw);\n" +
+        "vec4 getVectorSample(vec4 xyzw) {\n" +
+        "  vec4 xyz0 = vec4(xyzw.xyz, 0.0);\n" +
+        "  vec3 c = warpVertex(getSample(xyz0)).xyz;\n" +
+        "  vec3 r = warpVertex(getSample(xyz0 + vec4(1.0, 0.0, 0.0, 0.0))).xyz;\n" +
+        "  vec3 u = warpVertex(getSample(xyz0 + vec4(0.0, 1.0, 0.0, 0.0))).xyz;\n" +
+        "  vec3 n = cross(r - c, u - c) * 24.0 * 24.0;\n" +
+        "  vec3 vvv = c + 0.15 * n * xyzw.w;\n" +
+        "  vvv.z = 0.0;" +
+        "  return vec4(vvv, 0.0);\n" +
+        "}" +
+            "";
+
+    var discreteGradientOnDomain = "" +
+        "uniform float intensity;\n" +
+        "uniform float scale;\n\n" +
+        "vec4 warpVertex(vec4 xyzw) {\n" +
+        "  xyzw *= vec4(1.0, 0.5, 0.5, 0.0);\n\n" +
+        "  xyzw *= vec4(1.0, 2.0, 2.0, 0.0);\n" +
+        "    \n" +
+        "  return xyzw;\n" +
+        "}\n\n" +
+        "vec4 getSample(vec4 xyzw);\n" +
+        "vec4 getVectorSample(vec4 xyzw) {\n" +
+        "  vec4 xyz0 = vec4(xyzw.xyz, 0.0);\n" +
+        "  vec3 c = warpVertex(getSample(xyz0)).xyz;\n" +
+        "  vec3 r = warpVertex(getSample(xyz0 + vec4(1.0, 0.0, 0.0, 0.0))).xyz;\n" +
+        "  vec3 u = warpVertex(getSample(xyz0 + vec4(0.0, 1.0, 0.0, 0.0))).xyz;\n" +
+        "  vec3 n = cross(r - c, u - c) * 24.0 * 24.0;\n" +
+        "  vec3 vvv = c + 0.15 * n * xyzw.w;\n" +
+        "  vvv.z = 0.0;\n" +
+        "  if (n.x >= n.y) {\n" +
+        "    vvv.y = c.y;\n" +
+        "  }\n" +
+        "  else {\n" +
+        "    vvv.x = c.x;\n" +
+        "  }\n" +
+        "  return vec4(vvv, 0.0);\n" +
+        "}" +
+        "";
+
+    var tangent1 = "uniform float time;\n" +
+        "uniform float intensity;\n\n" +
+        "vec4 warpVertex(vec4 xyzw) {\n" +
+        "  xyzw *= vec4(1.0, 0.5, 0.5, 0.0);\n\n" +
+        "  xyzw *= vec4(1.0, 2.0, 2.0, 0.0);\n" +
+        "    \n" +
+        "  return xyzw;\n" +
+        "}\n\n" +
+        "vec4 getSample(vec4 xyzw);\n" +
+        "vec4 getVectorSample(vec4 xyzw) {\n" +
+        "  vec4 xyz0 = vec4(xyzw.xyz, 0.0);\n" +
+        "  vec3 c = warpVertex(getSample(xyz0)).xyz;\n" +
+        "  vec3 r = warpVertex(getSample(xyz0 + vec4(1.0, 0.0, 0.0, 0.0))).xyz;\n" +
+        "  return vec4(c - (c - r) * 24.0 * xyzw.w * .15, 0.0);\n" +
+        "}";
+
+    var tangent2 = "uniform float time;\n" +
+        "uniform float intensity;\n\n" +
+        "vec4 warpVertex(vec4 xyzw) {\n" +
+        "  xyzw *= vec4(1.0, 0.5, 0.5, 0.0);\n\n" +
+        "  xyzw *= vec4(1.0, 2.0, 2.0, 0.0);\n" +
+        "    \n" +
+        "  return xyzw;\n" +
+        "}\n\n" +
+        "vec4 getSample(vec4 xyzw);\n" +
+        "vec4 getVectorSample(vec4 xyzw) {\n" +
+        "  vec4 xyz0 = vec4(xyzw.xyz, 0.0);\n" +
+        "  vec3 c = warpVertex(getSample(xyz0)).xyz;\n" +
+        "  vec3 u = warpVertex(getSample(xyz0 + vec4(0.0, 1.0, 0.0, 0.0))).xyz;\n" +
+        "  return vec4(c + (c - u) * 24.0 * xyzw.w * .15 * 0.5, 0.0);\n" +
+        "}";
+
+    /** ############## MANUAL DATA */
+
+    var dataMax = [];
+    dataMax.push([-0.718161, -0.87696, mainFunction(-0.718161, -0.87696)]);
+    dataMax.push([-0.43, 0.78, mainFunction(-0.43, 0.78)]);
+    dataMax.push([0.6, -1.6, mainFunction(0.6, -1.6)]);
+    dataMax.push([-1.61, 1.35, mainFunction(-1.61, 1.35)]);//
+    dataMax.push([1.91, -0.49, mainFunction(1.91, -0.49)]);
+    dataMax.push([0.777451, 0.135425, mainFunction(0.777451, 0.135425)]);
+    dataMax.push([0.938465, 1.65805, mainFunction(0.938465, 1.65805)]);
+    dataMax.push([1.91, 1.05, mainFunction(1.91, 1.05)]);
+    dataMax.push([-2, -0.29, mainFunction(-2, -0.29)]);
+
+    var dataMin = [];
+    dataMin.push([-1.85, -1, mainFunction(-1.85, -1)]);
+    dataMin.push([-1.94, 0.55, mainFunction(-1.94, 0.55)]);
+    dataMin.push([-0.938465, -1.65805, mainFunction(-0.938465, -1.65805)]);
+    dataMin.push([-0.777451, -0.135425, mainFunction(-0.777451, -0.135425)]);
+    dataMin.push([0.39, -0.75, mainFunction(0.39, -0.75)]);
+    dataMin.push([1.5, -1.25, mainFunction(1.5, -1.25)]);
+    dataMin.push([0.718161, 0.87696, mainFunction(0.718161, 0.87696)]);
+    dataMin.push([2, 0.29, mainFunction(2, 0.29)]);
+
+    var dataSaddles = [];
+    dataSaddles.push([-1.5,-1.3, mainFunction(-1.5,-1.3)]);
+    dataSaddles.push([-1.4,-0.6, mainFunction(-1.4,-0.6)]);
+    dataSaddles.push([-0.2,-1.13,mainFunction(-0.2,-1.13)]);
+    dataSaddles.push([-0.2,-0.45,mainFunction(-0.2,-0.45)]);
+    dataSaddles.push([-1.29,0.18,mainFunction(-1.29,0.18)]);
+    dataSaddles.push([-1,1.1, mainFunction(-1.,1.1)]);//
+    dataSaddles.push([1.18,-1.2, mainFunction(1.18,-1.2)]);
+    dataSaddles.push([0.2,0.45,  mainFunction(0.2,0.45)]);
+    dataSaddles.push([0.2,1.13,  mainFunction(0.2,1.13)]);
+    dataSaddles.push([1.29,-0.18,mainFunction(1.29,-0.18)]);
+    dataSaddles.push([1.4,0.6,   mainFunction(1.4,0.6)]);
+    dataSaddles.push([1.5,1.3,   mainFunction(1.5,1.3)]);
+    //
+
+    /** PATHS */
+    pathMinToMax = function(emit, x, y, i, j, t) {
+        var p1, p2;
+        var newX, newY;
+        p1 = dataMin[2];
+        p2 = dataSaddles[0];
+        switch (j) {
+            case 0:
+                p1 = dataMax[0];
+                p2 = dataSaddles[0];
+            break;
+            case 1:
+                p1 = dataMax[0];
+                p2 = dataSaddles[1];
+            break;
+            case 2:
+                p1 = dataMax[0];
+                p2 = dataSaddles[2];
+            break;
+            case 3:
+                p1 = dataMin[0];
+                p2 = dataSaddles[1];
+            break;
+            case 4:
+                p1 = dataMin[0];
+                p2 = dataSaddles[0];
+            break;
+            case 5:
+                p1 = dataMin[2];
+                p2 = dataSaddles[2];
+            break;
+            case 6:
+                p1 = dataMax[2];
+                p2 = dataSaddles[2];
+                coeff= -1;
+            break;
+            case 7:
+                p1 = dataMin[3];
+                p2 = dataSaddles[3];
+            break;
+            case 8:
+                p1 = dataMin[4];
+                p2 = dataSaddles[3];
+            break;
+            case 9:
+                p1 = dataMin[4];
+                p2 = dataSaddles[2];
+                break;
+            case 10:
+                p1 = dataMin[3];
+                p2 = dataSaddles[1];
+            break;
+            case 11:
+                p1 = dataMin[3];
+                p2 = dataSaddles[4];
+                break;
+            case 12:
+                p1 = dataSaddles[4];
+                p2 = dataMax[1];
+                break;
+            case 13:
+                p1 = dataSaddles[7];
+                p2 = dataMax[1];
+                break;
+            case 14:
+                p1 = dataSaddles[7];
+                p2 = dataMin[3];
+                break;
+            case 15:
+                p1 = dataSaddles[7];
+                p2 = dataMax[5];
+                break;
+            case 16:
+                p1 = dataSaddles[3];
+                p2 = dataMax[5];
+                break;
+            case 17:
+                p1 = dataMax[0];
+                p2 = dataSaddles[3];
+                break;
+            case 18:
+                p1 = dataMax[2];
+                p2 = dataSaddles[6];
+                break;
+            case 19:
+                p1 = dataMin[5];
+                p2 = dataSaddles[6];
+                break;
+            case 20:
+                p1 = dataMin[4];
+                p2 = dataSaddles[6];
+                break;
+            case 21:
+                p1 = dataMin[4];
+                p2 = dataSaddles[9];
+                break;
+            case 22:
+                p1 = dataSaddles[9];
+                p2 = dataMax[5];
+                break;
+            case 23:
+                p1 = dataSaddles[9];
+                p2 = dataMax[4];
+                break;
+            case 24:
+                p1 = dataMax[4];
+                p2 = dataSaddles[6];
+                break;
+            case 25:
+                p1 = dataMax[7];
+                p2 = dataSaddles[11];
+                break;
+            case 26:
+                p1 = dataMax[7];
+                p2 = dataSaddles[10];
+                break;
+            case 27:
+                p1 = dataMin[7];
+                p2 = dataSaddles[10];
+                break;
+            case 28:
+                p1 = dataMin[6];
+                p2 = dataSaddles[11];
+                break;
+            case 29:
+                p1 = dataMin[6];
+                p2 = dataSaddles[10];
+                break;
+            case 30:
+                p1 = dataMax[6];
+                p2 = dataSaddles[11];
+                break;
+            case 31:
+                p1 = dataMax[6];
+                p2 = dataSaddles[8];
+                break;
+            case 32:
+                p1 = dataMin[7];
+                p2 = dataSaddles[9];
+                break;
+            case 33:
+                p1 = dataMax[1];
+                p2 = dataSaddles[8];
+                break;
+            case 34:
+                p1 = dataMax[1];
+                p2 = dataSaddles[5];
+                break;
+            case 35:
+                p1 = dataMax[3];
+                p2 = dataSaddles[5];
+                break;
+            case 36:
+                p1 = dataMax[3];
+                p2 = dataSaddles[5];
+                break;
+            case 37:
+                p1 = dataMax[8];
+                p2 = dataSaddles[1];
+                break;
+            case 38:
+                p1 = dataMax[8];
+                p2 = dataSaddles[4];
+                break;
+            case 39:
+                p1 = dataMin[1];
+                p2 = dataSaddles[5];
+                break;
+            case 40:
+                p1 = dataMin[1];
+                p2 = dataSaddles[4];
+                break;
+            case 41:
+                p1 = dataMax[5];
+                p2 = dataSaddles[10];
+                break;
+            case 42:
+                p1 = dataMin[6];
+                p2 = dataSaddles[8];
+                break;
+            case 43:
+                p1 = dataMin[6];
+                p2 = dataSaddles[7];
+                break;
+        }
+
+        // Draw a line between them...
+        var cd, oo;
+        cd = (p2[1] - p1[1])/(p2[0] - p1[0]);
+        oo = p2[1] - cd*(p2[0]);
+        var m = p2[0] < p1[0] ? p2[0] : p1[0];
+        var n = m == p2[0] ? p1[0] : p2[0];
+        newX = m + (Math.abs(n-m))*(i/(9));
+        newY = newX*cd + oo;
+        var newZ = mainFunction(newX, newY);
+        return emit(newX, newY, newZ);
+    };
+
+    /** #################### COMPLEX */
+    var nbCellsX = 40; // 2-cells, that is
+    var nbCellsY = 40; // idem
+
+    var ij0CellValues = [];
+    var ij0CellIndicesValues = [];
+    var boundaryValues = [];
+    var boundaryIndicesValues = [];
+
+    for (var i = 0; i<=nbCellsX; ++i) {
+        ij0CellValues.push([]);
+        boundaryValues.push([]);
+        for (var j = 0; j<=nbCellsY; ++j) {
+            var f = mainFunction(-2.0+i/10,-2.0+j/10);
+            ij0CellValues[i].push(f);
+            ij0CellIndicesValues.push([i, j, f]);
+
+            switch (i) {
+                case 0: case 19: case 21: case 40:
+                boundaryValues[i].push(f);
+                boundaryIndicesValues.push([i,j,f]);
+                continue;
+            }
+            switch (j) {
+                case 0: case 40:
+                boundaryValues[i].push(f);
+                boundaryIndicesValues.push([i,j,f]);
+                break;
+            }
+        }
+    }
+
+    ij0CellIndicesValues.sort(function(a,b) {return a[2] - b[2];});
+    boundaryIndicesValues.sort(function(a,b) {return a[2] - b[2];});
+
+    var lastPairIHope = {};
+    function addLastPair(i, j, k, l) {
+        var p1, p2, p3, p4;
+        p1 = i<j ? i : j;
+        p2 = i<j ? j : i;
+
+        p3 = k<l ? k : l;
+        p4 = k<l ? l : k;
+        lastPairIHope[(p1+"|"+p2+":"+p3+"|"+p4)] = true;
+    }
+
+    var dataBorder = [];
+    var dataBorderCritical = [];
+
+    function pushToArray0Vector(iStart, jStart, iEnd, jEnd, data) {
+        addLastPair(iStart, jStart, iEnd, jEnd);
+        var offset = 0.03;
+        if (jStart == jEnd) {
+            if (iStart < iEnd) offset = - offset;
+            data.push([-2.0+iStart/10-offset, -2.0+jStart/10, 0.0]);
+            data.push([-2.0+iEnd/10, -2.0+jEnd/10, 0.0]);
+            data.push([-2.0+iEnd/10, -2.0+jEnd/10, 0.0]);
+        }
+        else if (iStart == iEnd) {
+            if (jStart < jEnd) offset = -offset;
+            data.push([-2.0+iStart/10, -2.0+jStart/10-offset, 0.0]);
+            data.push([-2.0+iEnd/10, -2.0+jEnd/10, 0.0]);
+            data.push([-2.0+iEnd/10, -2.0+jEnd/10, 0.0]);
+        }
+    }
+
+    function pushToArray1Vector(iStart, jStart, iEnd, jEnd, data) {
+        addLastPair(iStart, jStart, iEnd, jEnd);
+
+        if (jStart == jEnd) {
+            if (iStart < iEnd) {
+                data.push([-2.0+iEnd/10-0.03,   -2.0+jEnd/10, 0.0]);
+                data.push([-2.0+iStart/10, -2.0+jStart/10, 0.0]);
+                data.push([-2.0+iStart/10, -2.0+jStart/10, 0.0]);
+            } else {
+                data.push([-2.0+iEnd/10+0.03,   -2.0+jEnd/10, 0.0]);
+                data.push([-2.0+iStart/10, -2.0+jStart/10, 0.0]);
+                data.push([-2.0+iStart/10, -2.0+jStart/10, 0.0]);
+            }
+        }
+        else if (iStart == iEnd) {
+            if (jStart < jEnd) {
+                data.push([-2.0+iEnd/10, -2.0+jEnd/10-0.03, 0.0]);
+                data.push([-2.0+iStart/10, -2.0+jStart/10, 0.0]);
+                data.push([-2.0+iStart/10, -2.0+jStart/10, 0.0]);
+            } else {
+                data.push([-2.0+iEnd/10, -2.0+jEnd/10+0.03, 0.0]);
+                data.push([-2.0+iStart/10, -2.0+jStart/10, 0.0]);
+                data.push([-2.0+iStart/10, -2.0+jStart/10, 0.0]);
+            }
+        }
+    }
+
+    function pushToArray2Vector(iStart, jStart, iEnd, jEnd, data) {
+        var offset = 0.05;
+        var offset2 = 0.05;
+        var offset3 = 0.05;
+        if (jStart == jEnd) {
+            if (iStart < iEnd) {
+                offset2 = -offset2;
+            } else {
+            }
+            data.push([-2.0+iEnd/10 + offset3, -2.0+jEnd/10 + offset, 0.0]);
+            data.push([-2.0+iStart/10 - offset2 + offset3, -2.0+jStart/10 + offset, 0.0]);
+            data.push([-2.0+iStart/10 - offset2 + offset3, -2.0+jStart/10 + offset, 0.0]);
+        }
+        else if (iStart == iEnd) {
+            if (jStart < jEnd) {
+                offset2 = -offset2;
+            } else
+            {
+            }
+            data.push([-2.0+iEnd/10 + offset, -2.0+jEnd/10 + offset, 0.0]);
+            data.push([-2.0+iStart/10 + offset, -2.0+jStart/10 - offset2 + offset, 0.0]);
+            data.push([-2.0+iStart/10 + offset, -2.0+jStart/10 - offset2 + offset, 0.0]);
+        }
+    }
+
+    for (var bCellId in boundaryIndicesValues) {
+        var bCell = boundaryIndicesValues[bCellId];
+        var ii = bCell[0];
+        var jj = bCell[1];
+
+        // search neighbour 1-cell
+        if (ii==0 || ii==21) {
+            if (jj==0) {
+                if (boundaryValues[ii][jj+1] > boundaryValues[ii+1][jj]) {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii+1][jj]) continue;
+                    pushToArray0Vector(ii+1, jj, ii, jj, dataBorder);
+                } else {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii][jj+1]) continue;
+                    pushToArray0Vector(ii, jj+1, ii, jj, dataBorder);
+                }
+            } else if (jj==40) {
+                if (boundaryValues[ii][jj-1] > boundaryValues[ii+1][jj]) {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii+1][jj]) continue;
+                    pushToArray0Vector(ii+1, jj, ii, jj, dataBorder);
+                } else {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii][jj-1]) continue;
+                    pushToArray0Vector(ii, jj-1, ii, jj, dataBorder);
+                }
+            } else {
+                if (boundaryValues[ii][jj+1] > boundaryValues[ii][jj-1]) {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii][jj-1]) continue;
+                    pushToArray0Vector(ii, jj-1, ii, jj, dataBorder);
+                } else {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii][jj+1]) continue;
+                    pushToArray0Vector(ii, jj+1, ii, jj, dataBorder);
+                }
+            }
+        } else if (ii==19 || ii==40) {
+            if (jj==0) {
+                if (boundaryValues[ii][jj+1] > boundaryValues[ii-1][jj]) {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii-1][jj]) continue;
+                    pushToArray0Vector(ii-1, jj, ii, jj, dataBorder);
+                } else {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii][jj+1]) continue;
+                    pushToArray0Vector(ii, jj+1, ii, jj, dataBorder);
+                }
+            } else if (jj==40) {
+                if (boundaryValues[ii][jj-1] > boundaryValues[ii-1][jj]) {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii-1][jj]) continue;
+                    pushToArray0Vector(ii-1, jj, ii, jj, dataBorder);
+                } else {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii][jj-1]) continue;
+                    pushToArray0Vector(ii, jj-1, ii, jj, dataBorder);
+                }
+            } else {
+                if (boundaryValues[ii][jj+1] > boundaryValues[ii][jj-1]) {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii][jj-1]) continue;
+                    pushToArray0Vector(ii, jj-1, ii, jj, dataBorder);
+                } else {
+                    if (boundaryValues[ii][jj] < boundaryValues[ii][jj+1]) continue;
+                    pushToArray0Vector(ii, jj+1, ii, jj, dataBorder);
+                }
+            }
+        } else if (ii<19 || ii>21) {
+            if (boundaryValues[ii+1][jj] > boundaryValues[ii-1][jj]) {
+                if (boundaryValues[ii][jj] < boundaryValues[ii-1][jj]) continue;
+                pushToArray0Vector(ii-1, jj, ii, jj, dataBorder);
+            } else {
+                if (boundaryValues[ii][jj] < boundaryValues[ii+1][jj]) continue;
+                pushToArray0Vector(ii+1, jj, ii, jj, dataBorder);
+            }
+        }
+    }
+
+    /** ###################### 1-GRADIENT */
+    var data1CellsVectors = [];
+    var paired1Cells = {};
+    function isLastPair(i, j, k, l) {
+        var p1, p2, p3, p4;
+        p1 = i<j ? i : j;
+        p2 = i<j ? j : i;
+
+        p3 = k<l ? k : l;
+        p4 = k<l ? l : k;
+        return ((p1+"|"+p2+":"+p3+"|"+p4) in lastPairIHope || (p3+"|"+p4+":"+p1+"|"+p2) in lastPairIHope);
+    }
+
+    function  pairToLower0Neighbor(i, j) {
+        var all = [];
+        all.push([i-1, j, ij0CellValues[i-1][j]]);
+        all.push([i+1, j, ij0CellValues[i+1][j]]);
+        all.push([i, j-1, ij0CellValues[i][j-1]]);
+        all.push([i, j+1, ij0CellValues[i][j+1]]);
+        all.sort(function(a,b){return a[2]-b[2];});
+        var done = false;
+
+        var min = 999.0;
+        var arrayMin;
+        for (var iii = 0; iii<4; ++iii) {
+            var current = all[iii];
+            if (current[0]>19 && current[0]<21) continue;
+
+            if (current[0]+"|"+current[1] in paired1Cells ) {
+
+                if (current[2] < min) {
+                    min = current[2];
+                    arrayMin = current;
+                    paired1Cells[current[0]+"|"+current[1]] = true;
+                    done = true;
+                }
+            }
+        }
+
+        if (!done) {
+            console.log("critical");
+        } else {
+            pushToArray1Vector(i, j, arrayMin[0], arrayMin[1], data1CellsVectors);
+        }
+
+        paired1Cells[i+"|"+j] = true;
+    }
+
+    for (var rCellId in ij0CellIndicesValues) {
+        var rCell = ij0CellIndicesValues[rCellId];
+        ii = rCell[0];
+        jj = rCell[1];
+        if (ii==0 || jj==0 || ii==40 || jj==40 || (ii<=21 && ii>=19)) continue;
+        pairToLower0Neighbor(ii,jj);
+    }
+
+    /** ###################### 2-GRADIENT */
+    var data2CellsVectors = [];
+    var ij2CellIndicesValues = [];
+    var ij2CellValues = [];
+    var edges = [];
+    var is2CellMarked = {};
+
+    // Down
+    for (i = 0; i<=nbCellsX; ++i) {
+        ij2CellIndicesValues.push([]);
+        for (j = 0; j<nbCellsY; ++j) {
+            var value;
+
+            ij2CellValues.push([i, j, value]);
+            ij2CellIndicesValues[i].push(value);
+        }
+    }
+    ij2CellValues.sort(function(a, b) {return b[2]-a[2];});
+
+    function pairToLower1Neighbor(i, j) {
+        if (i==19 || i==20) return;
+
+
+        //pushToArray2Vector(c1i, c1j, c2i, c2j, data2CellsVectors);
+    }
+
+    for (var cellId in ij2CellValues) {
+        var cell = ij2CellValues[cellId];
+        ii = cell[0];
+        jj = cell[1];
+        pairToLower1Neighbor(ii,jj);
+    }
+
+    /** ############## PRESENTATION */
+
+    // Init presentation and slider
+    var present = mathbox.present({index: 0});
+    var slide = present.clock().slide({id: 'top'});
+
+    // Axes + grid
+    slide.cartesian({
+        range: [[-2, 2], [-2, 2], [-2, 2]],
+        scale: [4, 4, 2],
+        position: [0, -.55]
+    }).axis({axis: 1, width: 3, detail: 256
+    }).axis({axis: 2, width: 3, detail: 256
+    }).axis({axis: 3, width: 3, detail: 256
+    }).grid({width: 2, divideX: 20, divideY: 20
+    });
+    mathbox.select('axis').set('color', 'black');
+
+    slide.cartesian({
+        range: [[-2, 2], [-2, 2], [-2, 2]],
+        scale: [4, 4, 2],
+        position: [0, -.55]
+    }).
+
+    //################ ISOCONTOURS
+    slide().
+        area({
+            id: 'surfaceArea0',
+            axes: [1, 3],
+            width: 193,
+            height: 97,
+            channels: 3,
+            expr: emitSurfaceBlop
+        }).surface({
+            zBias: 3,
+            shaded: true,
+            color: '#B8860B',
+            opacity: 0.8
+        }).
+    end().
+
+    slide().
+        area({
+            id: 'surfaceAreaProgressTop',
+            axes: [1, 3],
+            channels: 3,
+            width: 120,
+            height: 120,
+            expr: surfaceAreaProgressTop
+        }).point({
+            color: '#B8860B',
+            size: 10,
+            opacity: 1
+        })./*
+        slide().
+            area({
+                id: 'surfaceAreaProgressBot',
+                axes: [1, 3],
+                channels: 3,
+                width: 120,
+                height: 120,
+                expr: surfaceAreaProgressBot
+            }).point({
+                color: '#00AA00',
+                size: 10,
+                opacity: 1
+            }).
+        end().*/
+    end().
+
+    // One iso contour
+    slide().
+        area({
+            id: 'surfaceAreaProgressIsocontour',
+            axes: [1, 3],
+            channels: 3,
+            width: 120,
+            height: 120,
+            expr: surfaceAreaProgressIsocontour
+        }).point({
+            color: '#B8860B',
+            size: 10,
+            opacity: 1
+        }).
+    end().
+    //*/
+    //################ GRADIENT
+    slide().
+        area({
+            id: 'surfaceArea',
+            axes: [1, 3],
+            width: 193,
+            height: 97,
+            channels: 3,
+            expr: emitSurfaceBlop
+        }).surface({
+            zBias: 3,
+            shaded: true,
+            color: '#B8860B',
+            opacity: 0.8
+        }).
+
+        // ### GRADIENT COMPUTATION
+        slide().  // Tangent One
+            shader({
+                id: 'tangent1',
+                code: tangent1
+            }).resample({
+                source: '#surfaceArea',
+                width: 37,
+                height: 19,
+                items: 6,
+                channels: 4,
+                paddingWidth: 1,
+                paddingHeight: 1
+            }).vector({
+                color: '#c099ff',
+                start: false,
+                end: true,
+                width: 3,
+                zIndex: 1
+            }).
+
+            slide().  // Tangent Two
+                shader({
+                    id: 'tangent2',
+                    code: tangent2
+                }).resample({
+                    source: '#surfaceArea',
+                    width: 37,
+                    height: 19,
+                    items: 6,
+                    channels: 4,
+                    paddingWidth: 1,
+                    paddingHeight: 1
+                }).vector({
+                    color: '#46daaf',
+                    zBias: 30,
+                    end: true,
+                    width: 3,
+                    zIndex: 2
+                }).
+            end().
+        end().
+
+        slide(). // Vector field on grid
+            shader({
+                id: 'gradientOnGrid',
+                code: gradientOnGrid
+            }).resample({
+                source: '#surfaceArea',
+                width: 37,
+                height: 19,
+                items: 6,
+                channels: 4,
+                paddingWidth: 1,
+                paddingHeight: 1
+            }).vector({
+                color: '#47D0FF',
+                zBias: 15,
+                end: true,
+                width: 4
+            }).
+        end().
+
+        // ### EXTREMA COMPUTATION
+        slide().array({
+            id: 'sampler',
+            length: 100,
+            data: dataMax,
+            items: 3,
+            channels: 3
+        }).point({
+            color: '#AA0000',
+            size: 20,
+            zIndex: 2
+        }).
+            slide().array({
+                id: 'sampler2',
+                length: 100,
+                data: dataMin,
+                items: 3,
+                channels: 3
+            }).point({
+                color: '#0000AA',
+                size: 20,
+                zIndex: 2
+            }).
+                slide().array({
+                    id: 'sampler3',
+                    length: 100,
+                    data: dataSaddles,
+                    items: 3,
+                    channels: 3
+                }).point({
+                    color: '#00AA00',
+                    size: 20,
+                    zIndex: 2
+                }).
+                    slide().area({
+                        axes: [1, 3],
+                        channels: 3,
+                        width: 10,
+                        height: 1,
+                        expr: pathMinToMax
+                    }).line({
+                        color: '#AAAAAA',
+                        size: 10,
+                        opacity: 1,
+                        zIndex:2
+                    }).
+                    slide().area({
+                        axes: [1, 3],
+                        channels: 3,
+                        width: 10,
+                        height: 45,
+                        expr: pathMinToMax
+                    }).line({
+                        color: '#AAAAAA',
+                        size: 10,
+                        opacity: 1,
+                        zIndex:2
+                    }).
+                    end().
+                    end().
+                end().
+            end().
+        end().
+        // Blop remains
+        slide().end().
+    end().
+
+
+    // Le squelette
+    slide().
+        area({
+            id: 'surfaceAreaGrid',
+            axes: [1, 3],
+            width: 41,
+            height: 41,
+            channels: 3,
+            expr: emitSurfaceBlop
+        }).surface({
+            shaded:true,
+            fill: false,
+            lineX: true,
+            lineY: true,
+            color: '#B8860B'
+        }).
+    end().
+
+    // ### GROUND PROJECTION
+    slide(). // Vector field projected on ground
+        shader({
+            id: 'gradientOnDomain',
+            code: gradientOnDomain
+        }).resample({
+            source: '#surfaceArea',
+            width: 41,
+            height: 41,
+            items: 6,
+            channels: 4,
+            paddingWidth: 1,
+            paddingHeight: 1
+        }).vector({
+            zIndex: 2,
+            color: '#EEEEEE',
+            zBias: 15,
+            end: true,
+            width: 5
+        }).
+    end().
+
+    slide(). // Vector field discretized on domain
+        shader({
+            id: 'discreteGradientOnDomain',
+            code: discreteGradientOnDomain
+        }).resample({
+            source: '#surfaceArea',
+            width: 41,
+            height: 41,
+            items: 5,
+            channels: 4,
+            paddingWidth: 1,
+            paddingHeight: 1
+        }).vector({
+            zIndex: 2,
+            color: '#EEEEEE',
+            zBias: 15,
+            end: true,
+            width: 5
+        }).
+    end()
+
+            .
+
+        // Border gradient
+            slide().voxel({
+                data: [
+                    dataBorder
+                ],
+                height: dataBorder.length/3,
+                items: 3,
+                channels: 3
+            }).vector({
+                color: 0x00FFFF,
+                width: 3,
+                start: true
+            }).
+
+        // Interior 1 cell gradient
+            slide().
+            voxel({
+                data: [
+                    data1CellsVectors
+                ],
+                height: data1CellsVectors.length/3,
+                items: 3,
+                channels: 3
+            }).vector({
+                color: 0xFFFF00,
+                width: 3,
+                start: true
+            }).
+
+        // Interior 2 cell gradient
+            slide().
+            voxel({
+                data: [
+                    data2CellsVectors
+                ],
+                height: data2CellsVectors.length/3,
+                items: 3,
+                channels: 3
+            }).vector({
+                color: 0xFF0000,
+                width: 3,
+                start: true
+            }).
+            end().
+
+        end().
+    end();
+    //*/
+
+    /** ############### EXTREMA */
+
+    /** ####################### UTIL */
+
+    /*
+    slide(). // Simple saddle
+    area({
+    id: 'simpleSaddle',
+    axes: [1, 3],
+    width: 193,
+    height: 97,
+    channels: 3,
+    expr: emitSimpleSaddle
+    }).surface({
+    zBias: 3,
+    shaded: true,
+    color: '#B8860B',
+    opacity: 0.8
+    }).
+    end().
+
+    slide(). // Monkey saddle
+    area({
+    id: 'monkeySaddle',
+    axes: [1, 3],
+    width: 193,
+    height: 97,
+    channels: 3,
+    expr: emitMonkeySaddle
+    }).surface({
+    zBias: 3,
+    shaded: true,
+    color: '#B8860B',
+    opacity: 0.8
+    }).
+    end().
+
+    slide(). // Starfish saddle
+    area({
+    id: 'starfishSaddle',
+    axes: [1, 3],
+    width: 193,
+    height: 97,
+    channels: 3,
+    expr: emitStarfishSaddle
+    }).surface({
+    zBias: 3,
+    shaded: true,
+    color: '#B8860B',
+    opacity: 0.8
+    }).
+    end().
+
+    slide().
+    area({
+    id: 'surfaceAckley',
+    axes: [1, 3],
+    width: 193,
+    height: 97,
+    channels: 3,
+    expr: emitSurfaceAckley
+    }).surface({
+    zBias: 3,
+    shaded: true,
+    color: '#FF9030',
+    opacity:0.9
+    }).
+    end().
+    slide().end();
+    //*/
+
+    // window = top
+    //if (window == top)
+    top.onkeydown = function(e) {
+        switch (e.keyCode) {
+            case 81: return present[0].set('index', Math.max(present[0].get('index') - 1, 0));
+            case 68: console.log("coucou");
+                return present[0].set('index', Math.min(present[0].get('index') + 1, nbSlides));
+        }
+    };
+
+</script>
+</body>
+</html>
