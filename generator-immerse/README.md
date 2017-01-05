@@ -1,5 +1,5 @@
 # generator-immerse 
-Yeoman (Node.js + JavaScript frontapp)-scaffolder and (Heroku, Openshift)-deployer.
+>Scaffold immersive webapps.
 
 ## Not really intended for anyone outside of me ATM...
 
