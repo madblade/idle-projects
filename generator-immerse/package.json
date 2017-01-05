@@ -1,0 +1,60 @@
+{
+  "name": "generator-immerse",
+  "version": "0.0.0",
+  "description": "Scaffold immersive javascript/node environments.",
+  "homepage": "https://github.com/madblade/generator-immerse",
+  "author": {
+    "name": "M. S.",
+    "email": "",
+    "url": ""
+  },
+  "files": [
+    "generators/app",
+    "generators/heroku",
+    "generators/openshift"
+  ],
+  "main": "generators\\index.js",
+  "keywords": [
+    "",
+    "yeoman-generator"
+  ],
+  "dependencies": {
+    "babel-core": "^6.7.0",
+    "babel-plugin-transform-class-properties": "^6.6.0",
+    "babel-preset-es2015": "^6.6.0",
+    "babel-register": "^6.6.5",
+    "yeoman-generator": "^0.22.0",
+    "chalk": "^1.0.0",
+    "yosay": "^1.0.2",
+    "mkdirp": "^0.5.1",
+    "wiredep": "^2.2.2",
+    "underscore.string": "^3.1.1",
+    "lodash": "^4.6.1"
+  },
+  "devDependencies": {
+    "yeoman-test": "^1.0.0",
+    "yeoman-assert": "^2.0.0",
+    "eslint": "^2.1.0",
+    "eslint-config-xo-space": "^0.10.0",
+    "gulp": "^3.9.0",
+    "gulp-eslint": "^2.0.0",
+    "gulp-exclude-gitignore": "^1.0.0",
+    "gulp-line-ending-corrector": "^1.0.1",
+    "gulp-istanbul": "^0.10.3",
+    "gulp-mocha": "^2.0.0",
+    "gulp-plumber": "^1.0.0",
+    "gulp-nsp": "^2.1.0"
+  },
+  "eslintConfig": {
+    "extends": "xo-space",
+    "env": {
+      "mocha": true
+    }
+  },
+  "repository": "madblade/generator-immerse",
+  "scripts": {
+    "prepublish": "gulp prepublish",
+    "test": "gulp"
+  },
+  "license": "Apache-2.0"
+}
